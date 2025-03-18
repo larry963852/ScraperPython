@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Materiales de Construcción</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body>
+  <div class="min-h-screen bg-gray-200 py-24 sm:py-32">
+    <div class="mx-auto max-w-7xl px-6 lg:px-8">
+      <h2 class="text-center text-base/7 font-semibold text-indigo-600">Materiales de Construcción</h2>
+      <p
+        class="mx-auto mt-2 max-w-lg text-balance text-center text-4xl font-semibold tracking-tight text-gray-950 sm:text-5xl">
+        Encuentra todo lo necesario para tu construcción</p>
+
+      <div class="mt-10 grid gap-6 sm:grid-cols-1 lg:grid-cols-3">
+        <!-- Primera Columna: Materiales sugeridos -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-4">Materiales sugeridos</h3>
+          <form method="POST">
+            {% csrf_token %}
+            <label class="block text-gray-700 text-sm font-bold mb-2" for="input_text">
+              ¿Qué deseas construir?
+            </label>
+            <input type="text" name="input_text" id="input_text"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg"
+              placeholder="Escribe algo como 'una casa, un baño'" />
+            <button type="submit" class="w-full mt-4 px-4 py-2 bg-blue-500 text-white font-bold rounded-lg">
+              Analizar
+            </button>
+          </form>
+
+          {% if materials %}
+          <div class="mt-4">
+            <h3 class="text-lg font-bold mb-2">Materiales disponibles:</h3>
+            <div class="grid grid-cols-2 gap-4">
+              {% for material in materials %}
+              <button onclick="procesarMaterial('{{ material }}')"
+                class="bg-gray-700 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
+                {{ material }}
+              </button>
+              {% endfor %}
+            </div>
+          </div>
+          {% elif error %}
+          <p class="text-red-500">{{ error }}</p>
+          {% endif %}
+        </div>
+
+        <!-- Segunda Columna: Historial de precios -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-4">Historial de Precios</h3>
+          <!-- Aquí iría el historial de precios, por ahora lo represento con texto -->
+          <div id="historial-precios" class="space-y-4">
+          </div>
+          <div id="grafico-container" class="mt-8"></div>
+        </div>
+
+        <!-- Tercera Columna: Generar Calendarización -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-4">Generar Calendarización</h3>
+          <button id="btn-calendar" class="w-full mt-4 px-4 py-2 bg-green-500 text-white font-bold rounded-lg"
+            onclick="generarCalendarizacion()">
+            Generar Calendarización
+          </button>
+          <div id="grafico-container1" class="mt-8"></div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function procesarMaterial(material) {
+      const csrfToken = "{{ csrf_token }}";
+
+      fetch("{% url 'scrape_material' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
+        },
+        body: `material=${encodeURIComponent(material)}`,
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          } else if (data.graph) {
+            const graficoContainer = document.getElementById("grafico-container");
+
+            graficoContainer.innerHTML = "";
+            const img = document.createElement("img");
+            img.src = "data:image/png;base64," + btoa(data.graph);
+            img.className = "w-full max-w-4xl mx-auto";
+            // Limpiar gráficos previos
+            graficoContainer.appendChild(img);
+          }
+
+          obtenerPrecios(material);
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          alert("Ocurrió un error al procesar.");
+        });
+    }
+
+    function generarCalendarizacion() {
+      const csrfToken = "{{ csrf_token }}";
+
+      fetch("{% url 'generar_calendarizacion' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
+        },
+        body: `tipo_construccion=casa`, // Por ahora solo casa
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          } else if (data.graph) {
+            const graficoContainer = document.getElementById("grafico-container1");
+            const img = document.createElement("img");
+            img.src = data.graph;  // Usar la URL del archivo .png generado
+            img.className = "w-full max-w-4xl mx-auto";
+            // Limpiar gráficos previos
+            graficoContainer.appendChild(img);
+          }
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          alert("Ocurrió un error al generar la calendarización.");
+        });
+    }
+
+
+
+    function obtenerPrecios(material) {
+      const csrfToken = "{{ csrf_token }}";
+
+      fetch("{% url 'obtener_precios' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRFToken": csrfToken,
+        },
+        body: `material=${encodeURIComponent(material)}`,
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            alert(data.error);
+          } else {
+            // Limpiamos el contenedor de precios previos
+            const historialPrecios = document.getElementById('historial-precios');
+            historialPrecios.innerHTML = '';
+
+            // Añadimos los productos más baratos
+            data.productos.forEach(producto => {
+              const div = document.createElement('div');
+              div.className = 'flex justify-between';
+              div.innerHTML = `
+                <a href="${producto.url}" class="text-gray-700 hover:underline">${producto.nombre}</a>
+                <span class="text-gray-500">${producto.precio}</span>
+              `;
+              historialPrecios.appendChild(div);
+            });
+          }
+        })
+        .catch(error => {
+          console.error("Error:", error);
+          alert("Ocurrió un error al obtener los precios.");
+        });
+    }
+
+
+
+  </script>
+</body>
+
+</html>

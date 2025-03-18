@@ -1,0 +1,59 @@
+
+    @startuml
+    |Inicio|
+    start
+    :Recopilar requisitos de construcción [2 días];
+    :Analizar el terreno [3 días];
+    :Definir presupuesto y tiempo de ejecución [5 días];
+    :Obtener permisos de construcción [7 días];
+
+    |Fase de Excavación|
+    split
+      :Excavar los cimientos [4 días];
+      :Colocar las bases de los cimientos [3 días];
+    split again
+      :Verificar calidad de cimientos [2 días];
+      :Revisar aprobación de ingeniero [1 día];
+    end split
+
+    |Fase de Levantamiento de Paredes|
+    split
+      :Levantar paredes exteriores [5 días];
+      :Instalar columnas y soportes [4 días];
+    split again
+      :Colocar ventanas y puertas exteriores [4 días];
+    end split
+
+    |Fase de Colocación de Techo|
+    split
+      :Instalar estructura del techo [5 días];
+      :Colocar tejas o material elegido [5 días];
+    split again
+      :Verificar estanqueidad del techo [2 días];
+    end split
+
+    |Fase de Instalaciones|
+    split
+      :Instalar sistemas eléctricos y de fontanería [7 días];
+      :Instalar sistemas de calefacción y ventilación [5 días];
+    split again
+      :Verificar sistemas de seguridad [2 días];
+      :Revisar instalaciones de gas y agua [3 días];
+    end split
+
+    |Fase de Acabados|
+    split
+      :Colocar revestimiento de paredes [4 días];
+      :Instalar pisos y acabados interiores [6 días];
+    split again
+      :Instalar puertas y ventanas interiores [3 días];
+      :Realizar pintura y acabados finales [4 días];
+    end split
+
+    :Inspeccionar obra [2 días];
+    :Entregar obra al propietario [1 día];
+    :Recibir pago final [1 día];
+
+    stop
+    @enduml
+    
